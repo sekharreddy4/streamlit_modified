@@ -104,7 +104,7 @@ def get_conversation_history():
         if isinstance(message, HumanMessage):
             history += f"Patient: {message.content}\n"
         elif isinstance(message, AIMessage):
-            history += f" MedAI Agent: {message.content}\n"
+            history += f"AI: {message.content}\n"
     return history
 
 
@@ -138,8 +138,6 @@ def home():
         - Receive potential diagnoses based on your symptoms.
         - Download a summary of your diagnosis.
     """)
-    
-
 
 # Enter Symptoms page
 def enter_symptoms():
@@ -206,8 +204,6 @@ def enter_symptoms():
         st.write("### Current Symptoms:")
         for i, s in enumerate(st.session_state.symptoms, 1):
             st.write(f"{i}. {s}")
-
-# Diagnosis Results page
 def diagnosis_results():
     st.title("Diagnosis Results")
 
@@ -235,13 +231,12 @@ def diagnosis_results():
 
     # Display full conversation history
     st.write("### Conversation History:")
-    history_text = ""
     for message in st.session_state.chat_history:
         role_prefix = "Patient" if message["role"] == "Patient" else "AI"
-        history_text += f"**{role_prefix}:** {message['content']}\n"
-    st.write(history_text)
+        st.write(f"**{role_prefix}:** {message['content']}")
 
     # Add download button for conversation history
+    history_text = "\n".join([f"**{message['role']}:** {message['content']}" for message in st.session_state.chat_history])
     st.download_button(
         label="Download Conversation History",
         data=history_text,
@@ -249,6 +244,45 @@ def diagnosis_results():
         mime="text/plain",
     )
 
+def diagnosis_results():
+    st.title("Diagnosis Results")
+
+    if len(st.session_state.symptoms) >= 3:
+        if not st.session_state.diagnosis:
+            with st.spinner("Analyzing symptoms..."):
+                engine = ReasoningEngine(llm=llm, medical_data="Sample medical knowledge")
+                diagnosis = engine.diagnose(st.session_state.symptoms)
+                st.session_state.diagnosis = diagnosis
+
+        st.success("Diagnosis Complete!")
+        st.write(f"### Potential Diagnosis:\n{st.session_state.diagnosis}")
+
+        # Provide download button for diagnosis summary
+        summary = f"Symptoms: {', '.join(st.session_state.symptoms)}\nDiagnosis: {st.session_state.diagnosis}"
+        st.download_button(
+            label="Download Diagnosis Summary",
+            data=summary,
+            file_name="diagnosis_summary.txt",
+            mime="text/plain",
+        )
+
+    else:
+        st.warning("Please enter at least 3 symptoms on the 'Enter Symptoms' page.")
+
+    # Display full conversation history
+    st.write("### Conversation History:")
+    for message in st.session_state.chat_history:
+        role_prefix = "Patient" if message["role"] == "Patient" else "AI"
+        st.write(f"**{role_prefix}:** {message['content']}")
+
+    # Add download button for conversation history
+    history_text = "\n".join([f"**{message['role']}:** {message['content']}" for message in st.session_state.chat_history])
+    st.download_button(
+        label="Download Conversation History",
+        data=history_text,
+        file_name="conversation_history.txt",
+        mime="text/plain",
+    )
 
 # Main app logic
 def main():
