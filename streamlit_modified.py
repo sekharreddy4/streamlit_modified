@@ -104,7 +104,7 @@ def get_conversation_history():
         if isinstance(message, HumanMessage):
             history += f"Patient: {message.content}\n"
         elif isinstance(message, AIMessage):
-            history += f"AI: {message.content}\n"
+            history += f" MedAI Agent: {message.content}\n"
     return history
 
 
@@ -138,7 +138,7 @@ def home():
         - Receive potential diagnoses based on your symptoms.
         - Download a summary of your diagnosis.
     """)
-    st.image("https://via.placeholder.com/800x400?text=AI+Medical+Assistant", caption="AI Medical Assistant")
+    
 
 
 # Enter Symptoms page
